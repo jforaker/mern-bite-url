@@ -12,8 +12,14 @@
 body {
 	font-family: 'Roboto Mono', sans-serif;
 	font-size: 16px;
-	background: #1B1B24;
 	padding: 20px;
+
+	background-image: -webkit-radial-gradient(50% top, rgba(84, 90, 182, 0.261) 0%, rgba(56, 66, 223, 0) 95%), -webkit-radial-gradient(right top, circle, rgba(66, 40, 88, 0.3) 0%, rgba(121, 74, 162, 0) 57%);
+	background-image: radial-gradient(50% top, rgba(84, 90, 182, 0.21) 0%, rgba(56, 66, 223, 0) 95%), radial-gradient(right top, circle, rgba(66, 40, 88, 0.3) 0%, rgba(121, 74, 162, 0) 57%);
+	background-repeat: no-repeat;
+	background-size: 100% 1000px;
+	background-color: #070217;
+	-webkit-font-smoothing: antialiased;
 }
 
 input[type="text"] {
