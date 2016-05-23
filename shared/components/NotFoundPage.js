@@ -3,9 +3,9 @@ import React from 'react';
 class NotFoundPage extends React.Component {
 	render() {
 		return (
-			<div>
-				<h1>Page not found</h1>
-				<p>Sorry..</p>
+			<div style={{marginTop: 50}}>
+				<h1 style={{textAlign:'center',color:'#00FEFF'}}>Page not found</h1>
+				<p style={{textAlign:'center',color:'whitesmoke',marginTop:20}}>Sorry..</p>
 			</div>
 		);
 	}
