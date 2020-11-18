@@ -1,6 +1,6 @@
 {
   "name": "mern-bite-url",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "url shortener built with mern",
   "scripts": {
     "test": "node_modules/.bin/mocha shared/tests/*.spec.js --compilers js:babel-register",
@@ -42,7 +42,6 @@
     "body-parser": "^1.14.2",
     "chai": "^3.5.0",
     "clean-css": "^4.1.11",
-    "clean-css-cli": "^4.3.0",
     "cross-env": "^1.0.7",
     "css-loader": "^0.23.1",
     "css-modules-require-hook": "^2.1.0",
