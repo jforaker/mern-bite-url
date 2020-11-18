@@ -14,7 +14,7 @@
     "clean": "rimraf static/dist",
     "slate": "rimraf node_modules && npm install",
     "lint": "node_modules/.bin/eslint client server shared",
-    "vercel-build": "yarn build && node ./build.js"
+    "vercel-build": "npm run build && node ./build.js"
   },
   "repository": {
     "type": "git",
