@@ -72,19 +72,18 @@ leap into a newly arrived car before the owner's half out, leap literally under 
 `;
 
 export function listen(cb) {
-	var lines = script.split('\n').reduce((memo, line) => {
-		if (line !== '')
-			memo.push(line);
+  var lines = script.split("\n").reduce((memo, line) => {
+    if (line !== "") memo.push(line);
 
-		return memo
-	}, []);
+    return memo;
+  }, []);
 
-	function notify() {
-		if (lines.length) {
-			cb([lines.shift()]);
-			setTimeout(notify, Math.random() * 75)
-		}
-	}
+  function notify() {
+    if (lines.length) {
+      cb([lines.shift()]);
+      setTimeout(notify, Math.random() * 75);
+    }
+  }
 
-	notify()
+  notify();
 }

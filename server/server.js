@@ -1,63 +1,65 @@
-require('dotenv').config();
-import Express from 'express';
-import mongoose from 'mongoose';
-import bodyParser from 'body-parser';
-import path from 'path';
+require("dotenv").config();
+import Express from "express";
+import bodyParser from "body-parser";
+import path from "path";
+import { Provider } from "react-redux";
+import React from "react";
+import { renderToString } from "react-dom/server";
+import { match, RouterContext } from "react-router";
 
 // Webpack Requirements
-import webpack from 'webpack';
-import config from '../webpack.config.dev';
-import webpackDevMiddleware from 'webpack-dev-middleware';
-import webpackHotMiddleware from 'webpack-hot-middleware';
+import webpack from "webpack";
+import config from "../webpack.config.dev";
+import webpackDevMiddleware from "webpack-dev-middleware";
+import webpackHotMiddleware from "webpack-hot-middleware";
+// React And Redux Setup
+import { configureStore } from "../shared/redux/store/configureStore";
+
+// Import required modules
+import routes from "../shared/routes";
+import { fetchComponentData } from "./util/fetchData";
+import urls from "./routes/url.routes";
+import serverConfig from "./config";
+import { getRedirectUrl } from "./controllers/url.controller";
+import { connectDB } from "./util/db";
 
 // Initialize the Express App
 const app = new Express();
 
-if (process.env.NODE_ENV !== 'production') {
-	const compiler = webpack(config);
-	app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}));
-	app.use(webpackHotMiddleware(compiler));
+const useDB = () => async (req, res, next) => {
+  const { client, db } = await connectDB();
+  const isConnected = await client.isConnected();
+
+  if (!isConnected) {
+    return res.status(500).send("Database is not working :( so sorry! ");
+  }
+  req._db = db; // attach db to req object for appwide access
+  next();
+};
+
+if (process.env.NODE_ENV !== "production") {
+  const compiler = webpack(config);
+  app.use(
+    webpackDevMiddleware(compiler, {
+      noInfo: true,
+      publicPath: config.output.publicPath,
+    })
+  );
+  app.use(webpackHotMiddleware(compiler));
 }
 
-// React And Redux Setup
-import { configureStore } from '../shared/redux/store/configureStore';
-import { Provider } from 'react-redux';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
-import { match, RouterContext } from 'react-router';
-
-// Import required modules
-import routes from '../shared/routes';
-import { fetchComponentData } from './util/fetchData';
-import urls from './routes/url.routes';
-import dummyData from './dummyData';
-import serverConfig from './config';
-import {getRedirectUrl} from './controllers/url.controller';
-
-// MongoDB Connection
-let db = mongoose.connection;
-
-db.on('error', console.error);
-db.once('open', function (res) {
-	dummyData();
-});
-mongoose.connect(serverConfig.mongoURL, (error) => {
-	if (error) {
-		console.error('Please make sure Mongodb is installed and running!'); // eslint-disable-line no-console
-		throw error;
-	}
-});
-
 // Apply body Parser and server public assets and routes
-app.use(bodyParser.json({limit: '20mb'}));
-app.use(bodyParser.urlencoded({limit: '20mb', extended: false}));
-app.use(Express.static(path.resolve(__dirname, '../static')));
-app.use('/api', urls);
+app.use(useDB());
+app.use(bodyParser.json({ limit: "20mb" }));
+app.use(bodyParser.urlencoded({ limit: "20mb", extended: false }));
+app.use(Express.static(path.resolve(__dirname, "../static")));
+app.use("/api", urls);
 
 // Render Initial HTML
 const renderFullPage = (html, initialState) => {
-	const cssPath = process.env.NODE_ENV === 'production' ? '/css/app.min.css' : '/css/app.css';
-	return `
+  const cssPath =
+    process.env.NODE_ENV === "production" ? "/css/app.min.css" : "/css/app.css";
+  return `
     <!doctype html>
     <html>
       <head>
@@ -79,61 +81,72 @@ const renderFullPage = (html, initialState) => {
   `;
 };
 
-const renderError = err => {
-	const softTab = '&#32;&#32;&#32;&#32;';
-	const errTrace = process.env.NODE_ENV !== 'production' ?
-		`:<br><br><pre style="color:red">${softTab}${err.stack.replace(/\n/g, `<br>${softTab}`)}</pre>` : '';
-	return renderFullPage(`Server Error${errTrace}`, {});
+const renderError = (err) => {
+  const softTab = "&#32;&#32;&#32;&#32;";
+  const errTrace =
+    process.env.NODE_ENV !== "production"
+      ? `:<br><br><pre style="color:red">${softTab}${err.stack.replace(
+          /\n/g,
+          `<br>${softTab}`
+        )}</pre>`
+      : "";
+  return renderFullPage(`Server Error${errTrace}`, {});
 };
 
 // Server Side Rendering based on routes matched by React-router.
 app.use((req, res, next) => {
-	match({routes, location: req.url}, (err, redirectLocation, renderProps) => {
-		if (err) {
-			return res.status(500).end(renderError(err));
-		}
+  match({ routes, location: req.url }, (err, redirectLocation, renderProps) => {
+    if (err) {
+      return res.status(500).end(renderError(err));
+    }
 
-		if (redirectLocation) {
-			return res.redirect(302, redirectLocation.pathname + redirectLocation.search);
-		}
+    if (redirectLocation) {
+      return res.redirect(
+        302,
+        redirectLocation.pathname + redirectLocation.search
+      );
+    }
 
-		if (!renderProps) {
-			return next();
-		}
+    if (!renderProps) {
+      return next();
+    }
 
-		const initialState = {
-			posts: [],
-			post: {}
-		};
+    const initialState = {
+      posts: [],
+      post: {},
+    };
 
-		const store = configureStore(initialState);
+    const store = configureStore(initialState);
 
+    if (renderProps.params.hash) {
+      //user is pasting url
+      return getRedirectUrl(req, renderProps.params.hash, res);
+    }
 
-		if (renderProps.params.hash){
+    return fetchComponentData(
+      store,
+      renderProps.components,
+      renderProps.params
+    ).then(() => {
+      const initialView = renderToString(
+        <Provider store={store}>
+          <RouterContext {...renderProps} />
+        </Provider>
+      );
+      const finalState = store.getState();
 
-			//user is pasting url
-			return getRedirectUrl(renderProps.params.hash, res)
-		}
-
-		return fetchComponentData(store, renderProps.components, renderProps.params)
-			.then(() => {
-				const initialView = renderToString(
-					<Provider store={store}>
-						<RouterContext {...renderProps} />
-					</Provider>
-				);
-				const finalState = store.getState();
-
-				res.status(200).end(renderFullPage(initialView, finalState));
-			});
-	});
+      res.status(200).end(renderFullPage(initialView, finalState));
+    });
+  });
 });
 
 // start app
 app.listen(serverConfig.port, (error) => {
-	if (!error) {
-		console.log(`MERN is running on port: ${serverConfig.port}! Build something amazing!`); // eslint-disable-line
-	}
+  if (!error) {
+    console.log(
+      `MERN is running on port: ${serverConfig.port}! Build something amazing!`
+    ); // eslint-disable-line
+  }
 });
 
 export default app;

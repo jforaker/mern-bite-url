@@ -1,42 +1,40 @@
-import { createStore, applyMiddleware, compose } from 'redux';
-import thunk from 'redux-thunk';
-import DevTools from '../../container/DevTools/DevTools';
-import rootReducer from '../reducers/reducer';
-const reduxLogger = require('redux-logger')({level: 'info', collapsed: true});
+import { createStore, applyMiddleware, compose } from "redux";
+import thunk from "redux-thunk";
+import DevTools from "../../container/DevTools/DevTools";
+import rootReducer from "../reducers/reducer";
+const reduxLogger = require("redux-logger")({ level: "info", collapsed: true });
 
-let middleware = [
-	thunk
-];
+let middleware = [thunk];
 
 export function configureStore(initialState = {}) {
-	let enhancerClient;
-	middleware.push(reduxLogger);
-	if (process.env.CLIENT) {
+  let enhancerClient;
+  middleware.push(reduxLogger);
+  if (process.env.CLIENT) {
+    enhancerClient = compose(
+      applyMiddleware(...middleware),
+      window.devToolsExtension
+        ? window.devToolsExtension()
+        : DevTools.instrument()
+    );
+  }
 
-		enhancerClient = compose(
-			applyMiddleware(...middleware),
-			window.devToolsExtension ? window.devToolsExtension() : DevTools.instrument()
-		);
-	}
+  const enhancerServer = applyMiddleware(thunk);
 
+  let store;
 
-	const enhancerServer = applyMiddleware(thunk);
+  if (process.env.CLIENT) {
+    store = createStore(rootReducer, initialState, enhancerClient);
+  } else {
+    store = createStore(rootReducer, initialState, enhancerServer);
+  }
 
-	let store;
+  if (module.hot) {
+    // Enable Webpack hot module replacement for reducers
+    module.hot.accept("../reducers/reducer", () => {
+      const nextReducer = require("../reducers/reducer").default;
+      store.replaceReducer(nextReducer);
+    });
+  }
 
-	if (process.env.CLIENT) {
-		store = createStore(rootReducer, initialState, enhancerClient);
-	} else {
-		store = createStore(rootReducer, initialState, enhancerServer);
-	}
-
-	if (module.hot) {
-		// Enable Webpack hot module replacement for reducers
-		module.hot.accept('../reducers/reducer', () => {
-			const nextReducer = require('../reducers/reducer').default;
-			store.replaceReducer(nextReducer);
-		});
-	}
-
-	return store;
+  return store;
 }
