@@ -5,7 +5,6 @@ import { Provider } from "react-redux";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { RouterContext, match as Match } from "react-router";
-
 // Webpack Requirements
 import webpack from "webpack";
 import webpackConfig from "../webpack.config.dev";
@@ -130,9 +129,18 @@ app.use((req, res, next) => {
         renderProps.params
       ).then(() => {
         const initialView = renderToString(
+          React.createElement(
+            Provider,
+            {
+              store: store,
+            },
+            React.createElement(RouterContext, renderProps)
+          )
+          /* babel issue on vercel 
           <Provider store={store}>
             <RouterContext {...renderProps} />
           </Provider>
+          */
         );
         const finalState = store.getState();
 
