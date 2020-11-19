@@ -4,7 +4,7 @@
 
 This is an experiment in universal rendering and declarative programming in React with the fantastic [MERN](http://mern.io) project.
 
-![gif](http://jffileshares.s3.amazonaws.com/Screen-Recording-2016-05-22-00-37-00-BM03zKsBnA.gif)
+![gif](https://jffileshares.s3.amazonaws.com/ezgif-mb-url.gif)
 
 
 ### Quickstart
