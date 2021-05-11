@@ -54,7 +54,7 @@
     "extract-text-webpack-plugin": "^1.0.1",
     "history": "^1.17.0",
     "isomorphic-fetch": "^2.2.1",
-    "lodash": "^4.12.0",
+    "lodash": "^4.17.21",
     "mocha": "^2.4.5",
     "mongodb": "^3.6.3",
     "mongoose": "^4.3.7",
